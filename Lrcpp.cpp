@@ -39,44 +39,56 @@ double LL(double Alpha,double Beta,int Ng,NumericVector XXcov,NumericVector Ral,
 }
 
 // [[Rcpp::export]]
-NumericVector sampleX(double Alpha,double Beta,int Ng,NumericVector XXcov,NumericVector Ral,
-                      NumericVector Xobs,NumericMatrix Quienesg,int Npg,int NNtot,NumericMatrix QQ)
+NumericVector sampleX(double Alpha,double Beta,int Ng,
+                      const std::vector<double>& XXcov,
+                      const NumericVector &Ral,const NumericVector &Xobs,const NumericMatrix &Quienesg,
+                      int Npg,int NNtot,const NumericMatrix &QQ)
 {
-  NumericVector Xcov(XXcov);
-  NumericVector ral(Ral);
-  NumericMatrix quienesg(Quienesg);
-  NumericMatrix Q(QQ);
+  //NumericVector Xcov = XXcov;
+  vector<double> Xcov=XXcov;
+  NumericVector ral= Ral;
+  NumericMatrix quienesg = Quienesg;
+  NumericMatrix Q=QQ;
   double alph(Alpha);
   double b(Beta);
   int ng(Ng);
   int npg(Npg);
   int Ntot(NNtot);
+  //vector<double> Xcan(Ntot);
+  //vector<double> Xcan(Ntot);
+  
   NumericVector Xcan(Ntot);
-  NumericVector Xnew(XXcov);
+  NumericVector Xnew(Ntot);
+  NumericVector XNcov(Ntot);
+
+  XNcov=Xcov;
   double a0; double a1; double p1;double xx;
   
   for(int j=0; j<=(Ntot-1); j++)
   {
-    
+    Xnew=XNcov;
     //if X_j=0
-    Xcan=Xcov;
+    Xcan=XNcov;
     Xcan[j]=0;
     a0=LL(alph,b, Ng-1 ,Xcan,ral,Quienesg ,Npg+1,FALSE)*Q(0,Xobs[j]);
     
+
     //if X_j=1 
-    Xcan=Xcov;
+    Xcan=XNcov;
     Xcan[j]=1;
     a1=LL(alph,b, Ng-1 ,Xcan,ral,Quienesg,Npg+1,FALSE)*Q(1,Xobs[j]);
     
     p1=a1/(a0+a1);
     xx=R::rbinom(1,p1);
+    
     Xnew[j]=xx;
-  
-    Xcov=Xnew;  
+    XNcov=Xnew;  
     
+      
     
+   
   }
-  return Xcov;
+  return XNcov;
 }
 
 
