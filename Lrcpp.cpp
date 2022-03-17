@@ -5,7 +5,7 @@
 using namespace Rcpp;
 using namespace std;
 // [[Rcpp::export]]
-double LL(double Alpha,double Beta,int Ng,NumericVector XXcov,NumericVector Ral,NumericMatrix Quienesg,
+double LL(double Alpha,double Beta,int Ng, const NumericVector &XXcov,NumericVector Ral,NumericMatrix Quienesg,
        int Npg, bool LOG)
 {
   NumericVector Xcov(XXcov);
