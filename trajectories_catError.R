@@ -19,7 +19,7 @@ source('create_environmentalNLMR_categorical.R')
 
 ## 2. Simulate trajectories
 deltat=1
-N=150
+N=250
 times=seq(1,N,by=deltat) # observed times
 start=c(50,50) # initial coordinates
 TT=length(times) # number of observed times
@@ -143,7 +143,7 @@ control.data$cov=control.data$cov
 ### set error parameters and add error to covaritates
 covE=control.data$cov
 p00=0.95
-p11=0.9
+p11=0.95
 p10=1-p00
 p01=1-p11
 
