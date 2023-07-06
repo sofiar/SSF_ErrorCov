@@ -52,7 +52,8 @@ model {
   int pos; // incrementing index
   
 // diffuse normal prior for log odds ratios
-  b ~ normal(0, 1);
+  //b ~ normal(0, 1);
+   b ~ normal(0, 3);
   //error measurement
   // xt ~ normal(0, sigma_x);  // prior
   // x ~ normal(xt, tau);    // measurement model

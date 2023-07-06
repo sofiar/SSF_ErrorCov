@@ -1,27 +1,22 @@
-
-##### Generate trajectory and fit model considering error in categorical predictors
-
-
-#library(survival)
+library(survival)
+library(rstanarm)
+library(rstan)
 library(tidyverse)
 library(mvtnorm)
-#library(rstanarm)
+library(rstanarm)
 source('ExtraFunctions.R')
 
-## 1. Create categorical Environment 
-pi1=0.8
-pi0=1-pi1
-pii=c(pi0,pi1)
-lpii=log(pii)
-source('create_environmentalNLMR_categorical.R')
+
+source('create_environmentalNLMR.R')
+#tau=.2
 
 ## 2. Simulate trajectories
 deltat=1
-N=200
+N=250
 times=seq(1,N,by=deltat) # observed times
 start=c(50,50) # initial coordinates
 TT=length(times) # number of observed times
-nsims= 25 # number of observed trajectories
+nsims= 25# number of observed trajectories
 
 track = matrix(NA, nrow=length(times), ncol=3)
 track[,1] = sort(times)
@@ -76,27 +71,29 @@ options(mc.cores = parallel::detectCores())
 
 for (i in 1:nsims)
 {
- ss=salida[[i]]
- sl=StepLengths(coordinates(ss))
- dlist = list(N=length(sl),y=sl)
- stan.beta <- stan("rayleigh_dist.stan", data=dlist, iter=4000,chains=2)
- beta.p=as.data.frame(stan.beta)
- bets.p[[i]]=1/(beta.p$beta)^2
+  ss=salida[[i]]
+  sl=StepLengths(coordinates(ss))
+  dlist = list(N=length(sl),y=sl)
+  stan.beta <- stan("rayleigh_dist.stan", data=dlist, iter=4000,chains=2)
+  beta.p=as.data.frame(stan.beta)
+  bets.p[[i]]=1/(beta.p$beta)^2
 }
 
 
+#hist(bets.p[[1]])
 # bets.p=numeric(nsims)
 # 
 # for (i in 1:nsims)
 # {
-# ss=salida[[i]]
-# sl=StepLengths(coordinates(ss))
-# bets.p[i]=1/(1/(2*length(sl))*sum(sl^2))
+#   ss=salida[[i]]
+#   sl=StepLengths(coordinates(ss))
+#   bets.p[i]=1/(1/(2*length(sl))*sum(sl^2))
 # }
+# 
+# ebeta=mean(bets.p)
 
-#ebeta=mean(bets.p)
 
-## 4. Generate control sample 
+### sample control data
 
 case=c()
 x_=c()
@@ -105,7 +102,7 @@ indx=c()
 nsim=c()
 num.traj=c()
 ral=c()
-JJ=50
+JJ=80
 
 for (i in 1:nsims)
 {
@@ -150,70 +147,13 @@ control.data$cov=control.data$cov[,1]
 
 #step length
 control.data=control.data %>% group_by(num.traj)%>% mutate(sl=c(StepLengths(cbind(x_,y_)),NA))
-#control.data=control.data %>% mutate(x2=-sl^2/2)
-#control.data=control.data %>% mutate(lsl=log(sl))
-#control.data=control.data %>% mutate(sl2=(sl)^2)
+# control.data=control.data %>% mutate(x2=-sl^2/2)
+# control.data=control.data %>% mutate(lsl=log(sl))
+# control.data=control.data %>% mutate(sl2=(sl)^2)
 control.data=control.data %>% mutate(ral2=-ral^2/2)
 control.data$cov=control.data$cov
 
-#control.data=control.data %>% filter(!is.na(cov))
-
 ### set error parameters and add error to covaritates
-# covE=control.data$cov
-# p10=1-p00
-# p01=1-p11
-# 
-# P=matrix(1,ncol=2,nrow=2)
-# P[1,1]=p00
-# P[1,2]=p01
-# P[2,1]=p10
-# P[2,2]=p11
-# 
-# quienes0=which(control.data$cov==0)
-# quienes1=which(control.data$cov==1)
-# 
-# q.cambio0=which(rbinom(length(quienes0),1,prob=1-p00)==1)
-# covE[quienes0[q.cambio0]]=1
-# 
-# q.cambio1=which(rbinom(length(quienes1),1,prob=1-p11)==1)
-# covE[quienes1[q.cambio1]]=0
+# covE=control.data$cov+rnorm(length(control.data$cov),0,sd=tau)
 # 
 # control.data$covE=covE
-# 
-# # calculate Q and qi probas 
-# 
-# qi0=sum(c(p00*pi0,p01*pi1))
-# qi1=sum(c(p10*pi0,p11*pi1))
-# 
-# qi=c(qi0,qi1)
-# lqi=log(qi)
-# 
-# Q=matrix(1,ncol=2,nrow=2)
-# 
-# q00=p00*pi0/qi0
-# q11=p11*pi1/qi1
-# Q[1,1]=q00
-# Q[1,2]=1-q11
-# Q[2,2]=q11
-# Q[2,1]=1-q00
-# lQ=log(Q)
-
-# fit stan 
-#Q=t(Q)
-# counts=matrix(1,ncol=2,nrow=2)
-# counts[1,1]=70
-# counts[1,2]=30
-# counts[2,2]=3
-# counts[2,1]=97
-
-# datalist = list(N=nrow(control.data),x=covE,x_cat=covE+1,y=control.data$case,Q=Q,counts=counts)
-# stanc("clogitCatError2.stan")
-# Sys.setenv(LOCAL_CPPFLAGS = '-march=native')
-# options(mc.cores = parallel::detectCores())
-# 
-# fite <- stan("clogitCatError.stan", data=datalist,chains=1)
-# clogit_stane=as.data.frame(fite)
-# 
-# hist(clogit_stane$`beta[2]`)
-
-
